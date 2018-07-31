@@ -1,0 +1,40 @@
+#!/usr/bin/python
+import sys
+import yaml
+import json
+import pathlib2
+
+def prompt_and_overwrite(filename):
+    user_input = raw_input("Are you sure you wish to overwrite {}? y/n\n".format(filename))
+    user_input = user_input.lower()
+    return True if user_input == 'y' else False
+
+def change_extension(filename, ext):
+    file_ext_array = filename.split('.')
+    if len(file_ext_array) < 2:
+        return '{}.{}'.format(filename, ext)
+    return '.'.join(file_ext_array[:-1])
+
+def convert_yaml_to_json(filename):
+    with open(filename, 'r') as json_file:
+        data = json.load(json_file)
+        no_ext_filename = change_extension(filename, 'yaml')
+        with open('{}.yaml'.format(no_ext_filename), 'w') as yaml_out:
+            yaml.safe_dump(data, yaml_out, allow_unicode=True, default_flow_style=False)
+
+def accept_path(filename, force=False):
+    path = pathlib2.Path(filename)
+    try:
+        exists = path.resolve()
+    except FileNotFoundError:
+        return True
+    return force if force else prompt_and_overwrite(filename)
+
+
+if __name__ == "__main__":
+    for filename in sys.argv[1:]:
+        try:
+            if accept_path(change_extension(filename, 'yaml')):
+                convert_yaml_to_json(filename)
+        except Exception as e:
+            print('There was an error converting your file: {}'.format(e))
